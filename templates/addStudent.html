@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="index.html">Evidentiraj studenta</a></li>
+                <li><a href="#">Prebroj studente</a></li>
+                <li><a href="addStudent.html">Dodaj studenta</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <form action="#" method="POST" class="DBform">
+        <div class="addToDB">
+            <label for="name">Ime:</label>
+            <input type="text" name="name" id="name" required>
+            <label for="surname">Prezime:</label>
+            <input type="text" name="surname" id="surname" required>
+            <label for="index">Index:</label>
+            <input type="text" name="index" id="index" required>
+            <label for="smjer">Fakultet:</label>
+            <select id="smjer">
+                <option value="fist">FIST</option>
+                <option value="fmefb">FMEFB</option>
+                <option value="fprn">FPRN</option>
+                <option value="pmb">PMB</option>
+              </select>
+            <label for="email">Email:</label>
+            <input type="email" name="email" id="email" required>
+        </div>
+        <div class="button">
+            <input type="submit" value="Dodaj studenta" align="center">
+        </div>
+    </form>
+</body>
+</html>

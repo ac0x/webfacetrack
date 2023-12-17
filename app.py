@@ -8,7 +8,7 @@ import pickle
 
 app = Flask(__name__)
 socketio = SocketIO(app)
-camera = cv2.VideoCapture(0)
+camera = cv2.VideoCapture(1)
 
 recognized_faces = set()
 present_students_count = 0
