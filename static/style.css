@@ -1,0 +1,48 @@
+body{
+    margin: 0;
+    padding: 0;
+}
+
+header nav{
+    background-color: #f2f2f2;
+    display: flex;
+    justify-content: space-around;
+}
+
+header nav li{
+    display: inline-block;
+    margin: 0 20px;
+    align-items: center;
+    list-style: none;
+}
+
+header nav a{
+    position: relative;
+    text-decoration: none;
+    font-weight: bold;
+    padding-right: 100px;
+    font-size: 25px;
+}
+
+.camera{
+    display: flex;
+    justify-content: center;
+}
+
+.camera img{
+    width: 640px;
+    height: 480px;
+    margin-top: 100px;
+    border: 5px solid orange;
+}
+
+.camera .status{
+    margin-top: 100px;
+    padding-left: 150px;
+    font-size: 30px;
+    font-weight: bold;
+    color: red;
+}
+
+
+
