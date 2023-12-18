@@ -8,7 +8,7 @@ import pickle
 from firebase_admin import credentials, db, storage
 import firebase_admin
 from werkzeug.utils import secure_filename
-
+from PIL import Image
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -73,7 +73,12 @@ print("Encoding Complete")
 save_encodings(encodeListKnown, studentIds)
 print("File Saved")
 
-def recognize_faces(frame):
+def encode_image(img):
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    encode = face_recognition.face_encodings(img)[0]
+    return encode
+
+def recognize_faces_realtime(frame):
     imgS = cv2.resize(frame, (0, 0), None, 0.25, 0.25)
     imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
 
@@ -101,6 +106,7 @@ def recognize_faces(frame):
             bbox = (left * 4, top * 4, (right - left) * 4, (bottom - top) * 4)
 
             cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[0] + bbox[2], bbox[1] + bbox[3]), (0, 255, 0), 2)
+            cv2.putText(frame, f"{studentIds[matchIndex]}", (bbox[0] + 6, bbox[1] - 6), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2)
 
     return frame
 
@@ -110,7 +116,7 @@ def generate_frames():
         if not success:
             break
         else:
-            img = recognize_faces(img)
+            img = recognize_faces_realtime(img)
             _, jpeg = cv2.imencode('.jpg', img)
             frame = jpeg.tobytes()
 
@@ -133,7 +139,6 @@ def index():
 def video_feed():
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-
 @app.route('/add_student', methods=['POST', 'GET'])
 def add_student():
     if request.method == 'POST':
@@ -149,7 +154,16 @@ def add_student():
             photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             photo.save(photo_path)
 
-            # Koristite filename (bez ekstenzije) kao ključ
+            student_id = os.path.splitext(filename)[0]
+
+            #encoded_student_image = encode_image(cv2.imread(photo_path))
+
+            image = Image.open(photo_path)
+            resized_image = image.resize((250, 250))
+
+            resized_photo_path = os.path.join(app.config['UPLOAD_FOLDER'], f'{filename}')
+            resized_image.save(resized_photo_path)
+
             student_id = os.path.splitext(filename)[0]
 
             bucket = storage.bucket()
@@ -168,10 +182,10 @@ def add_student():
                 'total_attendance': 0,
                 'last_attendance_time': '',
                 'photo_path': f'{UPLOAD_FOLDER}/{filename}', 
-                'photo_url': photo_url
+                'photo_url': photo_url,
+                #'face_encoding': encoded_student_image.tolist()  
             }
             ref.child(student_id).set(student_data)
-
 
         return redirect(url_for('index'))
 
