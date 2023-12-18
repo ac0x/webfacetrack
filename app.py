@@ -12,7 +12,7 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 socketio = SocketIO(app)
-camera = cv2.VideoCapture(1)
+camera = cv2.VideoCapture(0)
 
 recognized_faces = set()
 present_students_count = 0
@@ -32,6 +32,46 @@ firebase_admin.initialize_app(cred, {
 
 UPLOAD_FOLDER = 'images'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def load_images_and_ids(folderpath):
+    pathList = os.listdir(folderpath)
+    imageList = []
+    studentIds = []
+
+    for path in pathList:
+        imageList.append(cv2.imread(os.path.join(folderpath, path)))
+        studentIds.append(os.path.splitext(path)[0])
+
+    return imageList, studentIds
+
+def find_encodings(image_list):
+    encode_list = []
+    for img in image_list:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        encode = face_recognition.face_encodings(img)[0]
+        encode_list.append(encode)
+    
+    return encode_list
+
+def save_encodings(encode_list, student_ids, filename="EncodeFile.p"):
+    encode_list_with_ids = [encode_list, student_ids]
+    with open(filename, "wb") as file:
+        pickle.dump(encode_list_with_ids, file)
+
+folderpath = 'images'
+
+# loading photos and ids
+imageList, studentIds = load_images_and_ids(folderpath)
+
+print("Start Encoding")
+# searching for encode faces
+encodeListKnown = find_encodings(imageList)
+encodeListKnownWithIds = [encodeListKnown, studentIds]
+print("Encoding Complete")
+
+# saving encode data to file
+save_encodings(encodeListKnown, studentIds)
+print("File Saved")
 
 def recognize_faces(frame):
     imgS = cv2.resize(frame, (0, 0), None, 0.25, 0.25)
@@ -131,6 +171,7 @@ def add_student():
                 'photo_url': photo_url
             }
             ref.child(student_id).set(student_data)
+
 
         return redirect(url_for('index'))
 
