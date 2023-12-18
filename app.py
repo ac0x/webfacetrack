@@ -1,10 +1,14 @@
-from flask import Flask, render_template, Response, url_for
+from flask import Flask, render_template, Response, url_for, request, redirect
 from flask_socketio import SocketIO, emit
 import cv2
 import face_recognition
 import numpy as np
 import os
 import pickle
+from firebase_admin import credentials, db, storage
+import firebase_admin
+from werkzeug.utils import secure_filename
+
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -19,6 +23,15 @@ encodeListKnownWithIds = pickle.load(file)
 file.close()
 encodeListKnown, studentIds = encodeListKnownWithIds
 print("File loaded")
+
+cred = credentials.Certificate("serviceAccountKey.json")
+firebase_admin.initialize_app(cred, {
+    'databaseURL': "https://facetrack-80ed9-default-rtdb.europe-west1.firebasedatabase.app/",
+    'storageBucket': "facetrack-80ed9.appspot.com"
+})
+
+UPLOAD_FOLDER = 'images'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def recognize_faces(frame):
     imgS = cv2.resize(frame, (0, 0), None, 0.25, 0.25)
@@ -71,7 +84,6 @@ def handle_reset_present_students_count():
     global present_students_count
     present_students_count = 0
     recognized_faces.clear()
-    #print("Reseting")
 
 @app.route('/')
 def index():
@@ -80,6 +92,51 @@ def index():
 @app.route('/video_feed')
 def video_feed():
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+@app.route('/add_student', methods=['POST', 'GET'])
+def add_student():
+    if request.method == 'POST':
+        name = request.form['name']
+        surname = request.form['surname']
+        index = request.form['index']
+        smjer = request.form['smjer']
+        email = request.form['email']
+        photo = request.files['photo']
+
+        if photo and photo.filename != '':
+            filename = secure_filename(photo.filename)
+            photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            photo.save(photo_path)
+
+            # Koristite filename (bez ekstenzije) kao ključ
+            student_id = os.path.splitext(filename)[0]
+
+            bucket = storage.bucket()
+            blob = bucket.blob(f'images/{filename}')
+            blob.upload_from_filename(photo_path)
+
+            photo_url = blob.public_url
+
+            ref = db.reference('Students')
+            student_data = {
+                'name': name,
+                'surname': surname,
+                'index': index,
+                'smjer': smjer,
+                'email': email,
+                'total_attendance': 0,
+                'last_attendance_time': '',
+                'photo_path': f'{UPLOAD_FOLDER}/{filename}', 
+                'photo_url': photo_url
+            }
+            ref.child(student_id).set(student_data)
+
+        return redirect(url_for('index'))
+
+@app.route('/add_student_form')
+def add_student_form():
+    return render_template('addStudent.html')
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

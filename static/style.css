@@ -57,7 +57,7 @@ header nav a{
 
 form .addToDB {
     display: grid;
-    grid-template-columns: 60px 500px;
+    grid-template-columns: 100px 500px;
     grid-gap: 30px;
     margin-top: 50px;
     font-size: 20px;
