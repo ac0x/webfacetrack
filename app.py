@@ -1,5 +1,5 @@
-from flask import Flask, render_template, Response, url_for, request, redirect
-from flask_socketio import SocketIO, emit
+from flask import Flask, render_template, Response, request, redirect, url_for
+from flask_socketio import SocketIO
 import cv2
 import face_recognition
 import numpy as np
@@ -10,12 +10,17 @@ import firebase_admin
 from werkzeug.utils import secure_filename
 from PIL import Image
 
+
+
 app = Flask(__name__)
 socketio = SocketIO(app)
 camera = cv2.VideoCapture(0)
+camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 recognized_faces = set()
 present_students_count = 0
+#students_present_status = {}
 
 print("Loading encoded file")
 file = open("EncodeFile.p", 'rb')
@@ -79,6 +84,7 @@ def encode_image(img):
     return encode
 
 def recognize_faces_realtime(frame):
+    global present_students_count, recognized_faces, students_present_status
     imgS = cv2.resize(frame, (0, 0), None, 0.25, 0.25)
     imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
 
@@ -97,7 +103,6 @@ def recognize_faces_realtime(frame):
 
             recognized_faces.add(studentIds[matchIndex])
 
-            global present_students_count
             present_students_count += 1
 
             print(f"FaceLocation: {faceLoc}")
@@ -107,8 +112,10 @@ def recognize_faces_realtime(frame):
 
             cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[0] + bbox[2], bbox[1] + bbox[3]), (0, 255, 0), 2)
             cv2.putText(frame, f"{studentIds[matchIndex]}", (bbox[0] + 6, bbox[1] - 6), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2)
-
+            #cv2.putText(frame, f"{studentNames[matchIndex]}", (bbox[0] + 6, bbox[1] + 30), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2)
+            
     return frame
+
 
 def generate_frames():
     while True:
@@ -123,7 +130,7 @@ def generate_frames():
             socketio.emit('update_present_students_count', present_students_count, namespace='/')
 
             yield (b'--frame\r\n'
-                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
 
 @socketio.on('reset_present_students_count', namespace='/')
 def handle_reset_present_students_count():
@@ -148,7 +155,6 @@ def add_student():
         smjer = request.form['smjer']
         email = request.form['email']
         photo = request.files['photo']
-
         if photo and photo.filename != '':
             filename = secure_filename(photo.filename)
             photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -156,10 +162,8 @@ def add_student():
 
             student_id = os.path.splitext(filename)[0]
 
-            #encoded_student_image = encode_image(cv2.imread(photo_path))
-
             image = Image.open(photo_path)
-            resized_image = image.resize((250, 250))
+            resized_image = image.resize((150, 160))
 
             resized_photo_path = os.path.join(app.config['UPLOAD_FOLDER'], f'{filename}')
             resized_image.save(resized_photo_path)
@@ -169,9 +173,7 @@ def add_student():
             bucket = storage.bucket()
             blob = bucket.blob(f'images/{filename}')
             blob.upload_from_filename(photo_path)
-
             photo_url = blob.public_url
-
             ref = db.reference('Students')
             student_data = {
                 'name': name,
@@ -183,7 +185,6 @@ def add_student():
                 'last_attendance_time': '',
                 'photo_path': f'{UPLOAD_FOLDER}/{filename}', 
                 'photo_url': photo_url,
-                #'face_encoding': encoded_student_image.tolist()  
             }
             ref.child(student_id).set(student_data)
 

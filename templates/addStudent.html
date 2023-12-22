@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Dodaj studenta | FaceTrack</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <header>
         <nav>
             <ul>
-                <li><a href="#">Evidentiraj studenta</a></li>
-                <li><a href="#">Prebroj studente</a></li>
-                <li><a href="{{ url_for('add_student_form') }}">Dodaj studenta</a></li>
+                <li><a href="{{ url_for('index') }}">Evidentiranje studenta</a></li>
+                <li><a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='gas.png') }}" alt="logo"></a></li>
+                <li><a href="{{ url_for('add_student_form') }}">Dodaj studenta</a></li>                           
             </ul>
         </nav>
     </header>
@@ -31,6 +32,12 @@
                 <option value="fmefb">FMEFB</option>
                 <option value="fprn">FPRN</option>
                 <option value="pmb">PMB</option>
+                <option value="vatel">VATEL</option>
+                <option value="politehnika">POLITEHNIKA</option>
+                <option value="fpn">FPN</option>
+                <option value="hum">HUMANISTICKE</option>
+                <option value="fu">Umjetnost</option>
+                <option value="fpt">FPT</option>
             </select>            
             <label for="email">Email:</label>
             <input type="email" name="email" id="email" required>

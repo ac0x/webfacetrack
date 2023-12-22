@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IDE GAS</title>
+    <title>Evidentuj studenta | FaceTrack</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.3/socket.io.js"></script>
@@ -27,23 +27,20 @@
     <header>
         <nav>
             <ul>
-                <li><a href="#">Evidentiraj studenta</a></li>
-                <li><a href="#">Prebroj studente</a></li>
-                <li><a href="{{ url_for('add_student_form') }}">Dodaj studenta</a></li>
+                <li><a href="{{ url_for('index') }}">Evidentiranje studenta</a></li>
+                <li><a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='gas.png') }}" alt="logo"></a></li>
+                <li><a href="{{ url_for('add_student_form') }}">Dodaj studenta</a></li>                           
             </ul>
         </nav>
     </header>
 
     <div class="camera">
         <img src="{{ url_for('video_feed') }}" alt="Camera Stream">
-        <!--<img src="/images/1111.jpg" alt="Camera Stream">-->
         <div class="status" id="statusDiv">
-            <p>Broj prisutnih studenata: <span id="studentCount">0</span></p>
-            <button id="resetButton">Vrati na 0</button>
+            <span>Broj prisutnih studenata<br><br> <span id="studentCount" style="font-size: 50px; color: #55efc4;">0</span></span><br>
+            <button id="resetButton">Reset</button>
         </div>
     </div>
-
-
 
 </body>
 </html>
